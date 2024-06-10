@@ -83,7 +83,6 @@ void button0_pressed(const struct device *dev, struct gpio_callback *cb, uint32_
 void button1_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     // 시간의 흐름을 중지하는 함수
-
     timer_running = !timer_running;
     printk("Timer %s\n", timer_running ? "started" : "stopped");
 }
@@ -91,6 +90,8 @@ void button1_pressed(const struct device *dev, struct gpio_callback *cb, uint32_
 void button3_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     seconds = 0;
+    // timer_running = !timer_running;
+    printk("Reset Timer\n");
 }
 
 int configure_button(const struct gpio_dt_spec *button, struct gpio_callback *button_cb_data, gpio_callback_handler_t handler)
@@ -103,7 +104,14 @@ int configure_button(const struct gpio_dt_spec *button, struct gpio_callback *bu
         return -1;
     }
 
-    ret = gpio_pin_configure_dt(button, GPIO_INPUT);
+    if (button == &button3)
+    {
+
+        ret = gpio_pin_configure_dt(button, GPIO_INPUT | GPIO_ACTIVE_HIGH);
+        // timer_running = !timer_running;
+    }
+    else
+        ret = gpio_pin_configure_dt(button, GPIO_INPUT);
     if (ret != 0)
     {
         printk("Error %d: failed to configure %s pin %d\n", ret, button->port->name, button->pin);
@@ -150,8 +158,10 @@ int main(void)
 
     ret = configure_button(&button3, &button3_cb_data, button3_pressed);
     if (ret != 0)
+    {
 
         return ret;
+    }
 
     // Start the timer
 
